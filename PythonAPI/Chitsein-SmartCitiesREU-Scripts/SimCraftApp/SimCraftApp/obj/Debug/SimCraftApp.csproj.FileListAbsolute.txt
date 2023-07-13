@@ -1,0 +1,9 @@
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\obj\Debug\SimCraftApp.csproj.CoreCompileInputs.cache
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\obj\Debug\SimCraftApp.csproj.AssemblyReference.cache
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\SimCraftApp.exe.config
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\SimCraftApp.exe
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\SimCraftApp.pdb
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\System.IO.dll
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\obj\Debug\SimCraftApp.csproj.CopyComplete
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\obj\Debug\SimCraftApp.exe
+C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\obj\Debug\SimCraftApp.pdb
