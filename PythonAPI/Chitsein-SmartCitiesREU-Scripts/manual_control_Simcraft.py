@@ -58,8 +58,13 @@ Use ARROWS or WASD keys for control.
 
 
 Use the Logitech G27 Steering Wheel and Pedals to control the vehicle
-Additionally, use the top left red button on the steering wheel to change the car's gear to reverse
-Additionally, use the top right red button on the steering wheel to c
+
+Buttons:
+Press the top left red button on the steering wheel to change the car's gear to reverse
+Press the top right red button on the steering wheel to toggle the platform input usage
+Press bottom right red button to toggle the right mirror view
+Press buttom right left button to toggle the left mirror view
+Press middle right red button to toggle the reverse view
 """
 
 from __future__ import print_function
@@ -73,6 +78,8 @@ from __future__ import print_function
 import glob
 import os
 import sys
+import subprocess
+from subprocess import Popen, CREATE_NEW_CONSOLE
 
 try:
     sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
@@ -427,9 +434,13 @@ class KeyboardControl(object):
         
         if self.right_pedal_axis_val < 0.99:
             self._control.throttle = (1 - self.right_pedal_axis_val)/2
+        else:
+            self._control.throttle = 0
         
-        if self.middle_pedal_axis_val < 0.85:
+        if self.middle_pedal_axis_val < 0.75:
             self._control.brake = (1 - self.middle_pedal_axis_val)/2
+        else:
+            self._control.brake = 0
 
         self._steer_cache = self.steer_sensitivity * self.wheel_axis_val
         self._control.steer = self._steer_cache
@@ -610,12 +621,38 @@ class KeyboardControl(object):
                         current_lights ^= carla.VehicleLightState.LeftBlinker
                     elif event.key == K_x:
                         current_lights ^= carla.VehicleLightState.RightBlinker
-            # Press top left red button on steering wheel (button event #7) in order to put the car in reverse
-            elif event.type == JOYBUTTONUP and event.button == 7:
-                self._control.gear = 1 if self._control.reverse else -1
-            # Press top right red button on steering wheel (button event #6) in order to toggle joystick usage
-            elif event.type == JOYBUTTONUP and event.button == 6:
-                self.joystick_in_use = False if self.joystick_in_use else True
+            
+            elif event.type == JOYBUTTONUP:
+                # Press top left red button on steering wheel (button event #7) in order to put the car in reverse
+                if event.button == 7:
+                    self._control.gear = 1 if self._control.reverse else -1
+                # Press top right red button on steering wheel (button event #6) in order to toggle joystick usage
+                elif event.button == 6:
+                    self.joystick_in_use = False if self.joystick_in_use else True
+                # Press bottom right red button in order to see right mirror
+                elif event.button == 21:
+                    print("Right mirror view toggled")
+                    right_mirror_index = 2
+                    if world.camera_manager.transform_index != right_mirror_index:
+                        world.camera_manager.set_camera(right_mirror_index)
+                    else:
+                        world.camera_manager.set_camera(0)
+                # Press buttom right left button in order to see left mirror
+                elif event.button == 22:
+                    print("Left mirror view toggled")
+                    left_mirror_index = 3
+                    if world.camera_manager.transform_index != left_mirror_index:
+                        world.camera_manager.set_camera(left_mirror_index)
+                    else:
+                        world.camera_manager.set_camera(0)
+                # Press middle right red button in order to see reverse view
+                elif event.button == 19:
+                    print("Reverse view toggled")
+                    reverse_view = 4
+                    if world.camera_manager.transform_index != reverse_view:
+                        world.camera_manager.set_camera(reverse_view)
+                    else:
+                        world.camera_manager.set_camera(0)
             
 
 
@@ -1147,12 +1184,16 @@ class CameraManager(object):
 
         if not self._parent.type_id.startswith("walker.pedestrian"):
             self._camera_transforms = [
-                # In front of car
+                # In front of car - index 0
                 (carla.Transform(carla.Location(x=+1.0*bound_x, y=-0.0*bound_y, z=1.3*bound_z)), Attachment.Rigid),
-                # Driver's seat
+                # Driver's seat - index 1
                 (carla.Transform(carla.Location(x=-0.1*bound_x, y=-0.25*bound_y, z=1.0*bound_z)), Attachment.Rigid),
-                # Mirror
-                
+                # Right Mirror - index 2
+                (carla.Transform(carla.Location(x=0.4*bound_x, y=+1.0*bound_y, z=1.0*bound_z), carla.Rotation(yaw=180)), Attachment.Rigid),
+                # Left Mirror - index 3
+                (carla.Transform(carla.Location(x=0.4*bound_x, y=-1.0*bound_y, z=1.0*bound_z), carla.Rotation(yaw=180)), Attachment.Rigid),
+                # Reverse View - index 4
+                (carla.Transform(carla.Location(x=-0.6*bound_x, y=0.0*bound_y, z=1.0*bound_z), carla.Rotation(yaw=180)), Attachment.Rigid),
                 # Other views
                 (carla.Transform(carla.Location(x=-2.0*bound_x, y=+0.0*bound_y, z=2.0*bound_z), carla.Rotation(pitch=8.0)), Attachment.SpringArmGhost),
                 (carla.Transform(carla.Location(x=+1.9*bound_x, y=+1.0*bound_y, z=1.2*bound_z)), Attachment.SpringArmGhost),
@@ -1211,6 +1252,13 @@ class CameraManager(object):
     def toggle_camera(self):
         self.transform_index = (self.transform_index + 1) % len(self._camera_transforms)
         self.set_sensor(self.index, notify=False, force_respawn=True)
+    
+    def set_camera(self, index):
+        if index < len(self._camera_transforms):
+            self.transform_index = index
+            self.set_sensor(self.index, notify=False, force_respawn=True)
+        else:
+            print("Index out of bounds for camera")
 
     def set_sensor(self, index, notify=True, force_respawn=False):
         index = index % len(self.sensors)
@@ -1328,8 +1376,8 @@ def game_loop(args):
 
         pygame.joystick.init()
         joysticks = [pygame.joystick.Joystick(i) for i in range(pygame.joystick.get_count())]
-        for joystick in joysticks:
-            print(joystick.get_name())
+        # for joystick in joysticks:
+        #     print(joystick.get_name())
 
         hud = HUD(args.width, args.height)
         world = World(sim_world, hud, args)
@@ -1356,7 +1404,7 @@ def game_loop(args):
             world.render(display)
             pygame.display.flip()
             velo_magnitude = world.player.get_velocity().length()
-            store_car_motion_info(world.player.get_transform().rotation.pitch, world.player.get_transform().rotation.yaw, world.player.get_transform().rotation.roll, world.player.get_angular_velocity().z, velo_magnitude)
+            store_car_motion_info(args, world.player.get_transform().rotation.pitch, world.player.get_transform().rotation.yaw, world.player.get_transform().rotation.roll, world.player.get_angular_velocity().z, velo_magnitude)
 
     finally:
 
@@ -1372,39 +1420,14 @@ def game_loop(args):
         pygame.quit()
 
 
-def test_status():
-    print("Received info from c# Script!")
-
-
-# Path for Python to C# Data (Car motion)
-MOTION_DATA_PIPE_FILE_PATH = "MOTION_DATA_PIPE.csv"
 import csv
 import os
-import win32file
-import win32pipe
-import time
-def store_car_motion_info(pitch, yaw, roll, angularVelocityY, velocityMagnitude):
-    # self.pipeName="Simcraft_Data_Pipeline"
-    # self.pipe_handle = win32pipe.CreateNamedPipe(r'\\.\pipe\\'+pipeName, win32pipe.PIPE_ACCESS_DUPLEX, win32pipe.PIPE_TYPE_MESSAGE | win32pipe.PIPE_READMODE_MESSAGE | win32pipe.PIPE_WAIT, 1, 65536, 65536, 0, None)
-    # win32pipe.ConnectNamedPipe(pipe_handle, None)
-    # while True:
-        
-    #     ret, read_message = win32file.ReadFile(pipe_handle, 1000)
-    #     print(F'{ret = } Received from c#: ' + read_message.decode('utf-8'))
 
-    #     ret, length = win32file.WriteFile(pipe_handle, 'Hello from Python\n'.encode())
-    #     print(F'{ret = }, {length = } from WriteFile')
-
-    #     win32file.FlushFileBuffers(pipe_handle)
-    # # win32pipe.DisconnectNamedPipe(pipe_handle)
-    #     #win32file.CloseHandle(pipe_handle)
-
-    #     time.sleep(2)
-    
-    
+# Make sure that the CSV file is within the same folder as both the python script and the SimcraftApp executable file, and that the python script is run within the folder.
+def store_car_motion_info(args, pitch, yaw, roll, angularVelocityY, velocityMagnitude):
     current_working_directory = os.getcwd()
-    path = current_working_directory + "\\" + MOTION_DATA_PIPE_FILE_PATH
-    with open(path, 'w', newline="") as csvfile:
+    # Path for Motion data pipeline CSV file from args.data_path
+    with open(args.data_path, 'w', newline="") as csvfile:
         datawriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL)
         datawriter.writerow(["pitch", "yaw", "roll", "angularVelocityY", "velocity"])
         datawriter.writerow([str(pitch), str(yaw), str(roll), str(angularVelocityY), str(velocityMagnitude)])
@@ -1421,8 +1444,21 @@ def store_car_motion_info(pitch, yaw, roll, angularVelocityY, velocityMagnitude)
 
 
 def main():
+
     argparser = argparse.ArgumentParser(
         description='CARLA Manual Control Client')
+    argparser.add_argument(
+        '--data_path',
+        metavar='data_path',
+        default="null",
+        type=str,
+        help='data_path set automatically to MOTION_DATA_PIPE.csv in current working directory')
+    argparser.add_argument(
+        '--motion_exe_path',
+        metavar='motion_exe_path',
+        default="null",
+        type=str,
+        help='motion_exe_path set automatically to SimCraftApp.exe in current working directory')
     argparser.add_argument(
         '-v', '--verbose',
         action='store_true',
@@ -1476,6 +1512,18 @@ def main():
 
     args.width, args.height = [int(x) for x in args.res.split('x')]
 
+    # If not specified by user, platform motion executable path is defined as SimCraftApp.exe within the cwd
+    if args.motion_exe_path == "null":
+        args.motion_exe_path = os.getcwd() + "\\SimCraftApp.exe"
+    # If not specified by user, platform motion executable path is defined as MOTION_DATA_PIPE.csv within the cwd
+    if args.data_path == "null":
+        args.data_path = os.getcwd() + "\\MOTION_DATA_PIPE.csv"
+    try:
+        print(args.motion_exe_path + " " + args.data_path)
+        motion_process = subprocess.Popen([args.motion_exe_path, args.data_path], creationflags=CREATE_NEW_CONSOLE)
+    except:
+        print("Simcraft Motion Platform Executable could not be run. Starting driving simulation without motion active.")
+
     log_level = logging.DEBUG if args.debug else logging.INFO
     logging.basicConfig(format='%(levelname)s: %(message)s', level=log_level)
 
@@ -1494,6 +1542,10 @@ def main():
 
 
     except KeyboardInterrupt:
+        try:
+            motion_process.kill()
+        except:
+            print("motion wasn't activated.")
         print('\nCancelled by user. Bye!')
 
 
