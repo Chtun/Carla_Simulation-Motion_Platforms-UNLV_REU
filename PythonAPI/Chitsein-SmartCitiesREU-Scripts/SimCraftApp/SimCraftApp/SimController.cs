@@ -62,6 +62,8 @@ namespace TRC.Services
         private int coefVeloBis = 100;
 
 		private int tempCount = 0;
+
+		private string MOTION_DATA_PIPE_FILE_PATH;
 		#endregion
 
 		#region Public Static Methods
@@ -90,9 +92,26 @@ namespace TRC.Services
 		/// </summary>
 		public static void Main(String[] args)
 		{
+			if (args.Length > 0)
+			{
+				for (int i = 0; i < args.Length; i++)
+				{
+					Console.WriteLine(args[i]);
+				}
+			}
+			
 			
 			SimController instance = new SimController();
 			instance.previousPulses = new int[3];
+
+			if (false)
+			{
+				instance.SetMotionFilePath(System.IO.Directory.GetCurrentDirectory() + "\\MOTION_DATA_PIPE.csv");
+			}
+			else
+			{
+				instance.SetMotionFilePath(System.IO.Directory.GetCurrentDirectory() + "\\MOTION_DATA_PIPE.csv");
+			}
 
 			instance.SetTimer();
 
@@ -441,8 +460,7 @@ namespace TRC.Services
 		
 		private void ReadMotionCSV()
 		{
-			String MOTION_DATA_PIPE_FILE_PATH = "MOTION_DATA_PIPE.csv";
-			String path = System.IO.Directory.GetCurrentDirectory() + "\\" + MOTION_DATA_PIPE_FILE_PATH;
+			String path = MOTION_DATA_PIPE_FILE_PATH;
 
 			if (tempCount >= 100)
 				Console.WriteLine("Path at: " + path);
@@ -586,6 +604,11 @@ namespace TRC.Services
 		public void SetVelocity(float velocity)
 		{
 			currentVelocity = velocity;
+		}
+
+		private void SetMotionFilePath(string path)
+		{
+			MOTION_DATA_PIPE_FILE_PATH = path;
 		}
 
 		// Misc. Methods

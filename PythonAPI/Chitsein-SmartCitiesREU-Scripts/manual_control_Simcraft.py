@@ -58,7 +58,8 @@ Use ARROWS or WASD keys for control.
 
 
 Use the Logitech G27 Steering Wheel and Pedals to control the vehicle
-Additionally, use the topleft red button on the steering wheel to change the car's gear to reverse
+Additionally, use the top left red button on the steering wheel to change the car's gear to reverse
+Additionally, use the top right red button on the steering wheel to c
 """
 
 from __future__ import print_function
@@ -407,26 +408,8 @@ class KeyboardControl(object):
         self.right_pedal_axis_val = 1
         self.middle_pedal_axis_val = 1
         self.left_pedal_axis_val = 1
-        self.steer_sensitivity = 1.2
-        self.joystick_in_use = False
-
-
-    def _parse_joystick_input(self):
-        
-        if self.right_pedal_axis_val < 0.99:
-            self._control.throttle = (1 - self.right_pedal_axis_val)/2
-        
-        if self.middle_pedal_axis_val < 0.85:
-            self._control.brake = (1 - self.middle_pedal_axis_val)/2
-
-        if not (self.wheel_axis_val < 0.01 and self.wheel_axis_val > -0.01):
-            self._steer_cache = self.steer_sensitivity * self.wheel_axis_val
-            self._control.steer = round(self._steer_cache, 1)
-        
-        if (self.right_pedal_axis_val < 0.99 or self.middle_pedal_axis_val < 0.85):
-            self.joystick_in_use = True
-        else:
-            self.joystick_in_use = False
+        self.steer_sensitivity = 0.25
+        self.joystick_in_use = True
 
     # Axis 0: wheel
     # Axis 1: rightmost pedal
@@ -438,6 +421,18 @@ class KeyboardControl(object):
             self.right_pedal_axis_val = self.joystick.get_axis(1)
             self.middle_pedal_axis_val = self.joystick.get_axis(2)
             self.left_pedal_axis_val = self.joystick.get_axis(4)
+
+
+    def _parse_joystick_input(self):
+        
+        if self.right_pedal_axis_val < 0.99:
+            self._control.throttle = (1 - self.right_pedal_axis_val)/2
+        
+        if self.middle_pedal_axis_val < 0.85:
+            self._control.brake = (1 - self.middle_pedal_axis_val)/2
+
+        self._steer_cache = self.steer_sensitivity * self.wheel_axis_val
+        self._control.steer = self._steer_cache
 
 
     def parse_events(self, client, world, clock, sync_mode):
@@ -615,8 +610,13 @@ class KeyboardControl(object):
                         current_lights ^= carla.VehicleLightState.LeftBlinker
                     elif event.key == K_x:
                         current_lights ^= carla.VehicleLightState.RightBlinker
+            # Press top left red button on steering wheel (button event #7) in order to put the car in reverse
             elif event.type == JOYBUTTONUP and event.button == 7:
                 self._control.gear = 1 if self._control.reverse else -1
+            # Press top right red button on steering wheel (button event #6) in order to toggle joystick usage
+            elif event.type == JOYBUTTONUP and event.button == 6:
+                self.joystick_in_use = False if self.joystick_in_use else True
+            
 
 
 
@@ -671,24 +671,23 @@ class KeyboardControl(object):
                 self._control.brake = 0
 
         steer_increment = 5e-4 * milliseconds
-        if keys[K_LEFT] or keys[K_a]:
-            if self._steer_cache > 0:
-                self._steer_cache = 0
+        if self.joystick_in_use != True:
+            if keys[K_LEFT] or keys[K_a]:
+                if self._steer_cache > 0:
+                    self._steer_cache = 0
+                else:
+                    self._steer_cache -= steer_increment
+            elif keys[K_RIGHT] or keys[K_d]:
+                if self._steer_cache < 0:
+                    self._steer_cache = 0
+                else:
+                    self._steer_cache += steer_increment
+            self._steer_cache = min(0.7, max(-0.7, self._steer_cache))
+            if not self._ackermann_enabled:
+                self._control.steer = round(self._steer_cache, 1)
+                self._control.hand_brake = keys[K_SPACE]
             else:
-                self._steer_cache -= steer_increment
-        elif keys[K_RIGHT] or keys[K_d]:
-            if self._steer_cache < 0:
-                self._steer_cache = 0
-            else:
-                self._steer_cache += steer_increment
-        elif self.joystick_in_use != True:
-            self._steer_cache = 0.0
-        self._steer_cache = min(0.7, max(-0.7, self._steer_cache))
-        if not self._ackermann_enabled:
-            self._control.steer = round(self._steer_cache, 1)
-            self._control.hand_brake = keys[K_SPACE]
-        else:
-            self._ackermann_control.steer = round(self._steer_cache, 1)
+                self._ackermann_control.steer = round(self._steer_cache, 1)
 
     def _parse_walker_keys(self, keys, milliseconds, world):
         self._control.speed = 0.0
@@ -1148,8 +1147,14 @@ class CameraManager(object):
 
         if not self._parent.type_id.startswith("walker.pedestrian"):
             self._camera_transforms = [
+                # In front of car
+                (carla.Transform(carla.Location(x=+1.0*bound_x, y=-0.0*bound_y, z=1.3*bound_z)), Attachment.Rigid),
+                # Driver's seat
+                (carla.Transform(carla.Location(x=-0.1*bound_x, y=-0.25*bound_y, z=1.0*bound_z)), Attachment.Rigid),
+                # Mirror
+                
+                # Other views
                 (carla.Transform(carla.Location(x=-2.0*bound_x, y=+0.0*bound_y, z=2.0*bound_z), carla.Rotation(pitch=8.0)), Attachment.SpringArmGhost),
-                (carla.Transform(carla.Location(x=+0.8*bound_x, y=+0.0*bound_y, z=1.3*bound_z)), Attachment.Rigid),
                 (carla.Transform(carla.Location(x=+1.9*bound_x, y=+1.0*bound_y, z=1.2*bound_z)), Attachment.SpringArmGhost),
                 (carla.Transform(carla.Location(x=-2.8*bound_x, y=+0.0*bound_y, z=4.6*bound_z), carla.Rotation(pitch=6.0)), Attachment.SpringArmGhost),
                 (carla.Transform(carla.Location(x=-1.0, y=-1.0*bound_y, z=0.4*bound_z)), Attachment.Rigid)]
