@@ -62,9 +62,9 @@ Use the Logitech G27 Steering Wheel and Pedals to control the vehicle
 Buttons:
 Press the top left red button on the steering wheel to change the car's gear to reverse
 Press the top right red button on the steering wheel to toggle the platform input usage
-Press bottom right red button to toggle the right mirror view
-Press buttom right left button to toggle the left mirror view
-Press middle right red button to toggle the reverse view
+Press the bottom right red button to toggle the right mirror view
+Press the bottom left red button to toggle the left mirror view
+Press the middle right red button to toggle the reverse view
 """
 
 from __future__ import print_function
@@ -629,7 +629,7 @@ class KeyboardControl(object):
                 # Press top right red button on steering wheel (button event #6) in order to toggle joystick usage
                 elif event.button == 6:
                     self.joystick_in_use = False if self.joystick_in_use else True
-                # Press bottom right red button in order to see right mirror
+                # Press bottom right red button (button event #21) in order to see right mirror
                 elif event.button == 21:
                     print("Right mirror view toggled")
                     right_mirror_index = 2
@@ -637,7 +637,7 @@ class KeyboardControl(object):
                         world.camera_manager.set_camera(right_mirror_index)
                     else:
                         world.camera_manager.set_camera(0)
-                # Press buttom right left button in order to see left mirror
+                # Press bottom left red button (button event #22) in order to see left mirror
                 elif event.button == 22:
                     print("Left mirror view toggled")
                     left_mirror_index = 3
@@ -645,7 +645,7 @@ class KeyboardControl(object):
                         world.camera_manager.set_camera(left_mirror_index)
                     else:
                         world.camera_manager.set_camera(0)
-                # Press middle right red button in order to see reverse view
+                # Press middle right red button (button event #19) in order to see reverse view
                 elif event.button == 19:
                     print("Reverse view toggled")
                     reverse_view = 4
