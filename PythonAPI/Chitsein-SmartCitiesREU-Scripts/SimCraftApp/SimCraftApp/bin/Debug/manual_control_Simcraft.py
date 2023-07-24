@@ -62,8 +62,8 @@ Use the Logitech G27 Steering Wheel and Pedals to control the vehicle
 Buttons:
 Press the top left red button on the steering wheel to change the car's gear to reverse
 Press the top right red button on the steering wheel to toggle the platform input usage
-Press the bottom right red button to toggle the right mirror view
-Press the bottom left red button to toggle the left mirror view
+Press the right wing behind the steering wheel to toggle the right mirror view
+Press the left wing behind the steering wheel to toggle the left mirror view
 Press the middle right red button to toggle the reverse view
 """
 
@@ -390,7 +390,7 @@ class World(object):
 
 class KeyboardControl(object):
     """Class that handles keyboard input."""
-    def __init__(self, world, start_in_autopilot, joystick):
+    def __init__(self, world, start_in_autopilot, joystick, args):
         self._autopilot_enabled = start_in_autopilot
         self._ackermann_enabled = False
         self._ackermann_reverse = 1
@@ -415,7 +415,7 @@ class KeyboardControl(object):
         self.right_pedal_axis_val = 1
         self.middle_pedal_axis_val = 1
         self.left_pedal_axis_val = 1
-        self.steer_sensitivity = 0.25
+        self.wheel_sensitivity = float(args.wheel_sensitivity)
         self.joystick_in_use = True
 
     # Axis 0: wheel
@@ -442,7 +442,7 @@ class KeyboardControl(object):
         else:
             self._control.brake = 0
 
-        self._steer_cache = self.steer_sensitivity * self.wheel_axis_val
+        self._steer_cache = self.wheel_sensitivity * self.wheel_axis_val
         self._control.steer = self._steer_cache
 
 
@@ -629,16 +629,16 @@ class KeyboardControl(object):
                 # Press top right red button on steering wheel (button event #6) in order to toggle joystick usage
                 elif event.button == 6:
                     self.joystick_in_use = False if self.joystick_in_use else True
-                # Press bottom right red button (button event #21) in order to see right mirror
-                elif event.button == 21:
+                # Press right wing behind wheel (button event #4) in order to see right mirror
+                elif event.button == 4:
                     print("Right mirror view toggled")
                     right_mirror_index = 2
                     if world.camera_manager.transform_index != right_mirror_index:
                         world.camera_manager.set_camera(right_mirror_index)
                     else:
                         world.camera_manager.set_camera(0)
-                # Press bottom left red button (button event #22) in order to see left mirror
-                elif event.button == 22:
+                # Press left wing behind wheel (button event #5) in order to see left mirror
+                elif event.button == 5:
                     print("Left mirror view toggled")
                     left_mirror_index = 3
                     if world.camera_manager.transform_index != left_mirror_index:
@@ -1382,7 +1382,7 @@ def game_loop(args):
         hud = HUD(args.width, args.height)
         world = World(sim_world, hud, args)
         # **Assumption that Logitech G27 joystick is the first one in the list**
-        controller = KeyboardControl(world, args.autopilot, joysticks[0])
+        controller = KeyboardControl(world, args.autopilot, joysticks[0], args)
 
         
         
@@ -1460,6 +1460,12 @@ def main():
         type=str,
         help='motion_exe_path set automatically to SimCraftApp.exe in current working directory')
     argparser.add_argument(
+        '--config_path',
+        metavar='config_path',
+        default="null",
+        type=str,
+        help='config_path set automatically to simcraft_config.txt in current working directory')
+    argparser.add_argument(
         '-v', '--verbose',
         action='store_true',
         dest='debug',
@@ -1482,8 +1488,8 @@ def main():
     argparser.add_argument(
         '--res',
         metavar='WIDTHxHEIGHT',
-        default='2624x600',
-        help='window resolution (default: 2624x600)')
+        default='2624x720',
+        help='window resolution (default: 2624x720)')
     argparser.add_argument(
         '--filter',
         metavar='PATTERN',
@@ -1512,14 +1518,59 @@ def main():
 
     args.width, args.height = [int(x) for x in args.res.split('x')]
 
+    print()
+    # If not specified by user, config path is defined as simcraft_config.txt within the cwd
+    if args.config_path == "null":
+        args.config_path = os.getcwd() + "\\config_simcraft.txt"
+    
+    print("Using configuration file from: " + args.config_path + "\n")
+
+    try:
+        config = open(args.config_path, 'r').readlines()
+
+        for var in config:
+            var = var.strip("\n")
+            sense_var_index = var.find("wheel_sensitivity=")
+            motion_exe_index = var.find("motion_exe_path=")
+            data_path_index = var.find("data_path=")
+            
+            if motion_exe_index != -1:
+                args.motion_exe_path = var[motion_exe_index + len("motion_exe_path="):]
+                print("Using motion exe path from configuration file: " + args.motion_exe_path)
+            
+            if data_path_index != -1:
+                args.data_path = var[data_path_index + len("data_path="):]
+                print("Using data path from configuration file: " + args.data_path)
+
+            if sense_var_index != -1:
+                args.wheel_sensitivity = var[sense_var_index + len("wheel_sensitivity="):]
+                print("Using wheel sensitivity from configuration file: " + args.wheel_sensitivity)
+                try:
+                    float(args.wheel_sensitivity)
+                except:
+                    print("Wheel sensitivity is not configured correctly. Make sure that it is only a float value.")
+                    args.wheel_sensitivity = 0.25
+                if float(args.wheel_sensitivity) <= 0:
+                    print("Wheel sensitivity value is not valid. Please choose one that is greater than 0. Setting wheel sensitivity to default (0.25)")
+                    args.wheel_sensitivity = 0.25
+            else:
+                args.wheel_sensitivity = 0.25
+
+    except:
+        print("Configuration file not found. Continuing with default values.")
+
+    print()
+
+    
     # If not specified by user, platform motion executable path is defined as SimCraftApp.exe within the cwd
     if args.motion_exe_path == "null":
         args.motion_exe_path = os.getcwd() + "\\SimCraftApp.exe"
-    # If not specified by user, platform motion executable path is defined as MOTION_DATA_PIPE.csv within the cwd
+    # If not specified by user, motion data pipeline is defined as MOTION_DATA_PIPE.csv within the cwd
     if args.data_path == "null":
         args.data_path = os.getcwd() + "\\MOTION_DATA_PIPE.csv"
+    
+
     try:
-        print(args.motion_exe_path + " " + args.data_path)
         motion_process = subprocess.Popen([args.motion_exe_path, args.data_path], creationflags=CREATE_NEW_CONSOLE)
     except:
         print("Simcraft Motion Platform Executable could not be run. Starting driving simulation without motion active.")

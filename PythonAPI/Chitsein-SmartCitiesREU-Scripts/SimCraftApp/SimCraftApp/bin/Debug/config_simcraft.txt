@@ -1,0 +1,3 @@
+motion_exe_path=C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\SimCraftApp.exe
+data_path=C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\SimCraftApp\SimCraftApp\bin\Debug\MOTION_DATA_PIPE.csv
+wheel_sensitivity=0.25
