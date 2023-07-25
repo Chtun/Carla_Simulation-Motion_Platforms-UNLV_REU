@@ -178,7 +178,7 @@ def get_actor_display_name(actor, truncate=250):
     return (name[:truncate - 1] + u'\u2026') if len(name) > truncate else name
 
 def get_actor_blueprints(world, filter, generation):
-    bps = [world.get_blueprint_library().find("vehicle.lincoln.mkz_2020")]
+    bps = [world.get_blueprint_library().find("vehicle.lincoln.mkz_2017")]
     return bps
     # bps = world.get_blueprint_library().filter(filter)
 
@@ -1187,7 +1187,7 @@ class CameraManager(object):
                 # In front of car - index 0
                 (carla.Transform(carla.Location(x=+1.0*bound_x, y=-0.0*bound_y, z=1.3*bound_z)), Attachment.Rigid),
                 # Driver's seat - index 1
-                (carla.Transform(carla.Location(x=-0.1*bound_x, y=-0.25*bound_y, z=1.0*bound_z)), Attachment.Rigid),
+                (carla.Transform(carla.Location(x=-0.15*bound_x, y=-0.25*bound_y, z=1.0*bound_z)), Attachment.Rigid),
                 # Right Mirror - index 2
                 (carla.Transform(carla.Location(x=0.4*bound_x, y=+1.0*bound_y, z=1.0*bound_z), carla.Rotation(yaw=180)), Attachment.Rigid),
                 # Left Mirror - index 3

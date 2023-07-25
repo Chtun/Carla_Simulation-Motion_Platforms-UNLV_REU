@@ -178,7 +178,7 @@ def get_actor_display_name(actor, truncate=250):
     return (name[:truncate - 1] + u'\u2026') if len(name) > truncate else name
 
 def get_actor_blueprints(world, filter, generation):
-    bps = [world.get_blueprint_library().find("vehicle.lincoln.mkz_2020")]
+    bps = [world.get_blueprint_library().find("vehicle.lincoln.mkz_2017")]
     return bps
     # bps = world.get_blueprint_library().filter(filter)
 
