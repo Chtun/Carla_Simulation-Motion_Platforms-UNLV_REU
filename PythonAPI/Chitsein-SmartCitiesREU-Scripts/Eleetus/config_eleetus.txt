@@ -1,0 +1,7 @@
+dll_path=C:\CarlaUnreal\carla\PythonAPI\Chitsein-SmartCitiesREU-Scripts\BTApi_x64.dll
+wheel_sensitivity=0.25
+# Warning! Changing rotational sensitivity can cause very violent motion if set too high
+rotational_sensitivity=75
+# Warning! Changing distance sensitivity can cause very violent motion if set too high
+distance_sensitivity=0.5
+function_call_hertz=20

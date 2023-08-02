@@ -78,8 +78,6 @@ from __future__ import print_function
 import glob
 import os
 import sys
-import subprocess
-from subprocess import Popen, CREATE_NEW_CONSOLE
 
 
 # For accessing functions from DLL
@@ -1699,16 +1697,7 @@ def game_loop(args):
 
         pygame.quit()
 
-
-import csv
-import os
-
-
-    
-
-
    
-
 
 
 
