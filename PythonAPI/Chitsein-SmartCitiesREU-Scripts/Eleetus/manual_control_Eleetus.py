@@ -63,7 +63,7 @@ Buttons:
 Press the top left red button on the steering wheel to change the car's gear to reverse
 Press the top right red button on the steering wheel to toggle the platform input usage
 Press bottom right red button to toggle the right mirror view
-Press buttom right left button to toggle the left mirror view
+Press bottom right left button to toggle the left mirror view
 Press middle right red button to toggle the reverse view
 """
 
@@ -78,6 +78,8 @@ from __future__ import print_function
 import glob
 import os
 import sys
+import subprocess
+from subprocess import Popen, CREATE_NEW_CONSOLE
 
 
 # For accessing functions from DLL
@@ -1390,6 +1392,7 @@ class MotionPlatform(object):
         return_code = self.blue_tiger_init(ctypes.c_char_p(company_char_p), ctypes.c_char_p(product_char_p), ctypes.c_char_p(version_char_p))
 
         while return_code != 0 and args.no_motion != True:
+            print("return code error: " + str(return_code))
             decision = input("There was an error with initializing the Blue Tiger Motion Platform. Would you like to continue without motion? (Y/N)")
             if decision.upper() == "Y":
                 args.no_motion = True
@@ -1583,7 +1586,6 @@ class MotionPlatform(object):
 
             # Using pitch roll data
             # return_code = self.blue_tiger_pitch_roll_data(pitch, roll)
-            
 
             # Using acceleration data
             return_code = self.blue_tiger_acceleration_data(xAccel, yAccel, zAccel, xRotAccel, yRotAccel, zRotAccel, xForward, yForward, zForward, xRight, yRight, zRight)
@@ -1697,7 +1699,16 @@ def game_loop(args):
 
         pygame.quit()
 
+
+import csv
+import os
+
+
+    
+
+
    
+
 
 
 
